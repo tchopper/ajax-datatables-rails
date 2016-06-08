@@ -66,19 +66,27 @@ module AjaxDatatablesRails
 
     def fetch_records
       records = get_raw_records
-      records = sort_records(records) if params[:order].present?
-      records = filter_records(records) if params[:search].present?
-      records = paginate_records(records) unless params[:length].present? && params[:length] == '-1'
+      records = sort_records(records) if params['order'].present?
+      records = filter_records(records) if params['search'].present?
+      records = paginate_records(records) unless params['length'].present? && params['length'] == '-1'
       records
     end
 
     def sort_records(records)
       sort_by = []
-      params[:order].each_value do |item|
-        sort_by << "#{sort_column(item)} #{sort_direction(item)}"
+      if params[:order].is_a?(String)
+        JSON.parse(params[:order]).each do |item|
+          sort_by << "#{sort_column(item)} #{sort_direction(item)}"
+        end
+      else
+        params[:order].each_value do |item|
+          sort_by << "#{sort_column(item)} #{sort_direction(item)}"
+        end
       end
+
       records.order(sort_by.join(", "))
     end
+
 
     def paginate_records(records)
       fail(
@@ -89,13 +97,20 @@ module AjaxDatatablesRails
 
     def filter_records(records)
       records = simple_search(records)
-      records = composite_search(records)
+      # records = composite_search(records)
       records
     end
 
     def simple_search(records)
-      return records unless (params[:search].present? && params[:search][:value].present?)
-      conditions = build_conditions_for(params[:search][:value])
+      return records unless (params['search'].present?)
+      search_val = params['search']['value'] != 'value' ? params['search']['value'].present? : JSON.parse(params['search'])['value'].present?
+      return records unless search_val
+      if params['search']['value'] != 'value'
+        val = params['search']['value']
+      else
+        val = JSON.parse(params['search'])['value']
+      end
+      conditions = build_conditions_for(val)
       records = records.where(conditions) if conditions
       records
     end
@@ -175,17 +190,17 @@ module AjaxDatatablesRails
     end
 
     def deprecated_sort_column(item)
-      sortable_columns[sortable_displayed_columns.index(item[:column])]
+        sortable_columns[sortable_displayed_columns.index(item[:column].to_s)]
     end
 
     def new_sort_column(item)
-      model, column = sortable_columns[sortable_displayed_columns.index(item[:column])].split('.')
-      col = [model.constantize.table_name, column].join('.')
+      model, column = sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i].split('.')
+      col = !column.blank? ? [model.constantize.table_name, column].join('.') : model #case for when sort is a virtual column
     end
 
     def sort_direction(item)
       options = %w(desc asc)
-      options.include?(item[:dir]) ? item[:dir].upcase : 'ASC'
+      options.include?(item['dir']) ? item['dir'].upcase : 'ASC'
     end
 
     def sortable_displayed_columns
@@ -194,11 +209,18 @@ module AjaxDatatablesRails
 
     def generate_sortable_displayed_columns
       @sortable_displayed_columns = []
-      params[:columns].each_value do |column|
-        @sortable_displayed_columns << column[:data] if column[:orderable] == 'true'
+      if params[:columns].is_a?(String)
+        JSON.parse(params[:columns]).each do |column|
+          @sortable_displayed_columns << column['data']
+        end
+      else
+        params[:columns].each_value do |column|
+          @sortable_displayed_columns << column[:data]
+        end
       end
       @sortable_displayed_columns
     end
+
 
     def load_paginator
       case config.paginator
