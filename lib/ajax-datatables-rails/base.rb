@@ -194,8 +194,35 @@ module AjaxDatatablesRails
     end
 
     def new_sort_column(item)
-      model, column = sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i].split('.')
+      p sortable_displayed_columns
+      p sortable_columns
+      p item
+      p item['column'].to_i
+      p sortable_displayed_columns[item['column'].to_i]
+      p sortable_displayed_columns[item['column'].to_i].to_i
+      p sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i]
+      p "----------------------"
+      p sortable_displayed_columns[item['column'].to_i].is_a?(Integer)
+      p "-----------------------"
+
+
+
+      model, column = if sortable_displayed_columns[item['column'].to_i].is_a?(Integer)
+        p "INTEGER"
+        sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i].split('.')
+      else
+        p "String"
+        p sortable_displayed_columns[item['column'].to_i]
+        p Hash[sortable_displayed_columns.map.with_index.to_a][sortable_displayed_columns[item['column'].to_i]]
+        
+        sortable_columns[Hash[sortable_columns.map.with_index.to_a][sortable_displayed_columns[item['column'].to_i]].to_i].split('.')
+      end
+
+      p model
+      p column
       col = !column.blank? ? [model.constantize.table_name, column].join('.') : model #case for when sort is a virtual column
+      p col
+      col
     end
 
     def sort_direction(item)
