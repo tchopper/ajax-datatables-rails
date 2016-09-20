@@ -131,6 +131,7 @@ module AjaxDatatablesRails
 
     def search_condition(column, value)
       if column[0] == column.downcase[0]
+
         ::AjaxDatatablesRails::Base.deprecated '[DEPRECATED] Using table_name.column_name notation is deprecated. Please refer to: https://github.com/antillas21/ajax-datatables-rails#searchable-and-sortable-columns-syntax'
         return deprecated_search_condition(column, value)
       else
@@ -194,34 +195,12 @@ module AjaxDatatablesRails
     end
 
     def new_sort_column(item)
-      p sortable_displayed_columns
-      p sortable_columns
-      p item
-      p item['column'].to_i
-      p sortable_displayed_columns[item['column'].to_i]
-      p sortable_displayed_columns[item['column'].to_i].to_i
-      p sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i]
-      p "----------------------"
-      p sortable_displayed_columns[item['column'].to_i].is_a?(Integer)
-      p "-----------------------"
-
-
-
       model, column = if sortable_displayed_columns[item['column'].to_i].is_a?(Integer)
-        p "INTEGER"
         sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i].split('.')
       else
-        p "String"
-        p sortable_displayed_columns[item['column'].to_i]
-        p Hash[sortable_displayed_columns.map.with_index.to_a][sortable_displayed_columns[item['column'].to_i]]
-        
         sortable_columns[Hash[sortable_columns.map.with_index.to_a][sortable_displayed_columns[item['column'].to_i]].to_i].split('.')
       end
-
-      p model
-      p column
       col = !column.blank? ? [model.constantize.table_name, column].join('.') : model #case for when sort is a virtual column
-      p col
       col
     end
 
