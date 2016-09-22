@@ -83,7 +83,6 @@ module AjaxDatatablesRails
           sort_by << "#{sort_column(item)} #{sort_direction(item)}"
         end
       end
-
       records.order(sort_by.join(", "))
     end
 
@@ -195,7 +194,7 @@ module AjaxDatatablesRails
     end
 
     def new_sort_column(item)
-      model, column = if sortable_displayed_columns[item['column'].to_i].is_a?(Integer)
+      model, column = if sortable_displayed_columns[item['column'].to_i].is_integer?
         sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i].split('.')
       else
         sortable_columns[Hash[sortable_columns.map.with_index.to_a][sortable_displayed_columns[item['column'].to_i]].to_i].split('.')
@@ -239,5 +238,11 @@ module AjaxDatatablesRails
       end
       self
     end
+  end
+end
+
+class String
+  def is_integer?
+    self.to_i.to_s == self
   end
 end
