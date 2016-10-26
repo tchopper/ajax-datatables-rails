@@ -155,8 +155,14 @@ module AjaxDatatablesRails
 
     def aggregate_query
       conditions = searchable_columns.each_with_index.map do |column, index|
-        value = params[:columns]["#{index}"][:search][:value] if params[:columns]
-        search_condition(column, value) unless value.blank?
+        if params[:columns].is_a? String
+          value = JSON.parse(params[:columns])[index]["search"]["value"] if params[:columns]
+          search_condition(column, value) unless value.blank?
+        else
+          value = params[:columns]["#{index}"][:search][:value] if params[:columns]
+          search_condition(column, value) unless value.blank?
+        end
+
       end
       conditions.compact.reduce(:and)
     end
