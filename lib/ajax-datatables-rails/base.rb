@@ -21,6 +21,11 @@ module AjaxDatatablesRails
       @sortable_columns ||= []
     end
 
+
+    def view_columns
+      @view_columns ||= []
+    end
+
     def searchable_columns
       @searchable_columns ||= []
     end
@@ -169,7 +174,7 @@ module AjaxDatatablesRails
 
     def typecast
       case config.db_adapter
-      when :oracle then 'VARCHAR2(4000)'  
+      when :oracle then 'VARCHAR2(4000)'
       when :pg then 'VARCHAR'
       when :mysql2 then 'CHAR'
       when :sqlite3 then 'TEXT'
@@ -200,13 +205,19 @@ module AjaxDatatablesRails
     end
 
     def new_sort_column(item)
-      model, column = if sortable_displayed_columns[item['column'].to_i].is_integer?
-        sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i].split('.')
+      if view_columns != []
+        source = view_columns[sortable_displayed_columns[item['column'].to_i].to_sym][:source]
+        model, column = source.split('.')
+        col = !column.blank? ? [model.constantize.table_name, column].join('.') : source
       else
-        sortable_columns[Hash[sortable_columns.map.with_index.to_a][sortable_displayed_columns[item['column'].to_i]].to_i].split('.')
+        model, column = if sortable_displayed_columns[item['column'].to_i].is_integer?
+          sortable_columns[sortable_displayed_columns[item['column'].to_i].to_i].split('.')
+        else
+          sortable_columns[Hash[sortable_columns.map.with_index.to_a][sortable_displayed_columns[item['column'].to_i]].to_i].split('.')
+        end
+        col = !column.blank? ? [model.constantize.table_name, column].join('.') : model #case for when sort is a virtual column
+        col
       end
-      col = !column.blank? ? [model.constantize.table_name, column].join('.') : model #case for when sort is a virtual column
-      col
     end
 
     def sort_direction(item)
